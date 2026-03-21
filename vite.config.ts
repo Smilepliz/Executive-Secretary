@@ -1,12 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// GitHub project pages: https://<user>.github.io/<repo>/
-// В CI переменная GITHUB_REPOSITORY задаётся автоматически (owner/repo).
-const repo = process.env.GITHUB_REPOSITORY?.split("/")[1];
-const base = repo ? `/${repo}/` : "/";
-
-export default defineConfig({
-  base,
+// GitHub Pages: относительный base надёжнее абсолютного /Repo/ — ассеты резолвятся
+// относительно index.html (нет 404 из‑за кэша старого HTML или регистра в URL).
+export default defineConfig(({ command }) => ({
+  base: command === "serve" ? "/" : "./",
   plugins: [react()]
-});
+}));
