@@ -36,6 +36,18 @@ body {
   margin-top: 16px;
 }
 
+.panel--history {
+  width: 100%;
+  max-width: 282px;
+}
+
+.panel--fill {
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
 .panel h3 {
   margin-top: 0;
 }
@@ -117,7 +129,7 @@ body {
 .content-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 282px);
   margin-top: 16px;
 }
 

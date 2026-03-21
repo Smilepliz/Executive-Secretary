@@ -31,7 +31,7 @@ function humanizeAction(record: HistoryRecord): string {
 
 function HistoryPanel({ history }: HistoryPanelProps): JSX.Element {
   return (
-    <aside className="panel">
+    <aside className="panel panel--history">
       <h3>Что происходило</h3>
       {history.length === 0 ? (
         <p className="muted">Пока нет выполненных действий.</p>

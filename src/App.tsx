@@ -264,7 +264,7 @@ function App(): JSX.Element {
       </section>
 
       <main className="content-grid">
-        <section className="panel">
+        <section className="panel panel--fill">
           <h3>Где сейчас статья</h3>
           <div className="facts facts--single">
             <div>
