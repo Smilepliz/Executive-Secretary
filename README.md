@@ -91,3 +91,9 @@
 npm install
 npm run dev
 ```
+
+Тесты (Vitest):
+
+```bash
+npm run test
+```

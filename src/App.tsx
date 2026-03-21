@@ -14,6 +14,11 @@ import {
   getStatusById,
   getStatusesByStage
 } from "./domain/workflow.engine";
+import {
+  buildReviewerInviteBody,
+  buildReviewerInviteSubject,
+  buildReviewerMailtoHref
+} from "./domain/reviewerInvite.template";
 import { Article, HistoryRecord, ScenarioDefinition, StageDefinition, StatusId } from "./domain/workflow.types";
 import AntiplagiarismStep from "./components/AntiplagiarismStep";
 
@@ -54,6 +59,8 @@ function App(): JSX.Element {
   const [isReviewerModalOpen, setIsReviewerModalOpen] = useState<boolean>(false);
   const [selectedReviewerIds, setSelectedReviewerIds] = useState<string[]>([]);
   const [assignedReviewers, setAssignedReviewers] = useState<ReviewerOption[]>([]);
+  /** id рецензента → отформатированная дата/время отправки запроса (mailto) */
+  const [sentRequests, setSentRequests] = useState<Record<string, string>>({});
 
   const reviewerOptions: ReviewerOption[] = [
     {
@@ -204,6 +211,7 @@ function App(): JSX.Element {
     const selected = reviewerOptions.filter((reviewer) => selectedReviewerIds.includes(reviewer.id));
     if (selected.length === 0) return;
     setAssignedReviewers(selected);
+    setSentRequests({});
     setIsReviewerModalOpen(false);
     setSelectedReviewerIds([]);
     const result = applyAction(workflowConfig, article, "assign-reviewers");
@@ -220,6 +228,27 @@ function App(): JSX.Element {
     setActiveScenario(scenario);
     setArticle(makeArticle(scenario));
     setHistory([createScenarioSwitchLog(scenario)]);
+    setAssignedReviewers([]);
+    setSentRequests({});
+    setSelectedReviewerIds([]);
+  };
+
+  const sendReviewerRequest = (reviewerId: string): void => {
+    const reviewer = assignedReviewers.find((r) => r.id === reviewerId);
+    if (!reviewer) return;
+    const params = { reviewerFullName: reviewer.fullName, articleTitle: article.title };
+    const subject = buildReviewerInviteSubject(params);
+    const body = buildReviewerInviteBody(params);
+    const href = buildReviewerMailtoHref(reviewer.email, subject, body);
+    window.location.assign(href);
+    const formatted = new Date().toLocaleString("ru-RU", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    setSentRequests((prev) => ({ ...prev, [reviewerId]: formatted }));
   };
 
   const openManualStageModal = (stageId: StageDefinition["id"]): void => {
@@ -328,17 +357,28 @@ function App(): JSX.Element {
                       </tr>
                     </thead>
                     <tbody>
-                      {assignedReviewers.map((reviewer) => (
-                        <tr key={reviewer.id}>
-                          <td>{reviewer.fullName}</td>
-                          <td>—</td>
-                          <td className="request-cell">
-                            <button type="button" className="ghost-button">
-                              Отправить запрос
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {assignedReviewers.map((reviewer) => {
+                        const sentAt = sentRequests[reviewer.id];
+                        return (
+                          <tr key={reviewer.id}>
+                            <td>{reviewer.fullName}</td>
+                            <td>{sentAt ?? "—"}</td>
+                            <td className="request-cell">
+                              {sentAt ? (
+                                <span className="reviewer-request-sent">Отправлено</span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="ghost-button"
+                                  onClick={() => sendReviewerRequest(reviewer.id)}
+                                >
+                                  Отправить запрос
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

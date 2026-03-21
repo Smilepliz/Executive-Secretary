@@ -364,6 +364,12 @@ button {
   min-width: 170px;
 }
 
+.reviewer-request-sent {
+  color: #067647;
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .ml-8 {
   margin-left: 8px;
 }
