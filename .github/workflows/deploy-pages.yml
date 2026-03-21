@@ -25,6 +25,10 @@ jobs:
       - run: npm ci
       - run: npm run test
       - run: npm run build
+        env:
+          VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
+          VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
+          VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -14,8 +14,10 @@ import {
   getStatusById,
   getStatusesByStage
 } from "./domain/workflow.engine";
+import { isEmailJsConfigured, sendReviewerEmailViaEmailJs } from "./domain/reviewerEmailSend";
 import {
   buildReviewerInviteBody,
+  buildReviewerInviteClipboardText,
   buildReviewerInviteSubject,
   buildReviewerMailtoHref
 } from "./domain/reviewerInvite.template";
@@ -61,6 +63,8 @@ function App(): JSX.Element {
   const [assignedReviewers, setAssignedReviewers] = useState<ReviewerOption[]>([]);
   /** id рецензента → отформатированная дата/время отправки запроса (mailto) */
   const [sentRequests, setSentRequests] = useState<Record<string, string>>({});
+  const [sendingReviewerId, setSendingReviewerId] = useState<string | null>(null);
+  const [sendMailError, setSendMailError] = useState<string | null>(null);
 
   const reviewerOptions: ReviewerOption[] = [
     {
@@ -212,6 +216,7 @@ function App(): JSX.Element {
     if (selected.length === 0) return;
     setAssignedReviewers(selected);
     setSentRequests({});
+    setSendMailError(null);
     setIsReviewerModalOpen(false);
     setSelectedReviewerIds([]);
     const result = applyAction(workflowConfig, article, "assign-reviewers");
@@ -230,25 +235,56 @@ function App(): JSX.Element {
     setHistory([createScenarioSwitchLog(scenario)]);
     setAssignedReviewers([]);
     setSentRequests({});
+    setSendMailError(null);
     setSelectedReviewerIds([]);
   };
 
-  const sendReviewerRequest = (reviewerId: string): void => {
-    const reviewer = assignedReviewers.find((r) => r.id === reviewerId);
-    if (!reviewer) return;
-    const params = { reviewerFullName: reviewer.fullName, articleTitle: article.title };
-    const subject = buildReviewerInviteSubject(params);
-    const body = buildReviewerInviteBody(params);
-    const href = buildReviewerMailtoHref(reviewer.email, subject, body);
-    window.location.assign(href);
-    const formatted = new Date().toLocaleString("ru-RU", {
+  const formatReviewerRequestSentAt = (): string =>
+    new Date().toLocaleString("ru-RU", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit"
     });
-    setSentRequests((prev) => ({ ...prev, [reviewerId]: formatted }));
+
+  const sendReviewerRequest = async (reviewerId: string): Promise<void> => {
+    const reviewer = assignedReviewers.find((r) => r.id === reviewerId);
+    if (!reviewer) return;
+    setSendMailError(null);
+    setSendingReviewerId(reviewerId);
+
+    const templateParams = { reviewerFullName: reviewer.fullName, articleTitle: article.title };
+    const subject = buildReviewerInviteSubject(templateParams);
+    const body = buildReviewerInviteBody(templateParams);
+
+    const result = await sendReviewerEmailViaEmailJs({
+      toEmail: reviewer.email,
+      reviewerFullName: reviewer.fullName,
+      articleTitle: article.title
+    });
+
+    if (result.ok) {
+      setSentRequests((prev) => ({ ...prev, [reviewerId]: formatReviewerRequestSentAt() }));
+      setSendingReviewerId(null);
+      return;
+    }
+
+    if (result.reason === "not_configured") {
+      const href = buildReviewerMailtoHref(reviewer.email, subject, body);
+      const clipboardText = buildReviewerInviteClipboardText(reviewer.email, subject, body);
+      try {
+        await navigator.clipboard.writeText(clipboardText);
+      } catch {
+        window.location.assign(href);
+      }
+      setSentRequests((prev) => ({ ...prev, [reviewerId]: formatReviewerRequestSentAt() }));
+      setSendingReviewerId(null);
+      return;
+    }
+
+    setSendMailError(result.message);
+    setSendingReviewerId(null);
   };
 
   const openManualStageModal = (stageId: StageDefinition["id"]): void => {
@@ -348,6 +384,17 @@ function App(): JSX.Element {
               {shouldShowReviewerTable ? (
                 <div className="mt-16">
                   <p className="label-strong">Назначенные рецензенты</p>
+                  {sendMailError ? (
+                    <p className="send-mail-error mt-8" role="alert">
+                      Не удалось отправить письмо: {sendMailError}
+                    </p>
+                  ) : null}
+                  {!isEmailJsConfigured() ? (
+                    <p className="muted mt-8 reviewer-request-hint">
+                      По кнопке «Отправить письмо» текст письма копируется в буфер — откройте почту в браузере (Gmail,
+                      Mail.ru и т.д.) и вставьте в письмо сочетанием «Ctrl+V».
+                    </p>
+                  ) : null}
                   <table className="reviewers-table mt-8">
                     <thead>
                       <tr>
@@ -370,9 +417,10 @@ function App(): JSX.Element {
                                 <button
                                   type="button"
                                   className="ghost-button"
-                                  onClick={() => sendReviewerRequest(reviewer.id)}
+                                  disabled={sendingReviewerId === reviewer.id}
+                                  onClick={() => void sendReviewerRequest(reviewer.id)}
                                 >
-                                  Отправить запрос
+                                  {sendingReviewerId === reviewer.id ? "Отправка…" : "Отправить письмо"}
                                 </button>
                               )}
                             </td>

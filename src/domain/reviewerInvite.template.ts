@@ -40,3 +40,13 @@ export function buildReviewerMailtoHref(email: string, subject: string, body: st
   const query = `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   return `mailto:${trimmed}?${query}`;
 }
+
+/**
+ * Текст для копирования в буфер: вставьте в почту (веб или клиент), укажите получателя вручную при необходимости.
+ */
+export function buildReviewerInviteClipboardText(toEmail: string, subject: string, body: string): string {
+  return `Кому: ${toEmail.trim()}
+Тема: ${subject}
+
+${body}`;
+}

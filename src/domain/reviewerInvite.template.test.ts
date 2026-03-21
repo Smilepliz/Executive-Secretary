@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   JOURNAL_NAME,
   buildReviewerInviteBody,
+  buildReviewerInviteClipboardText,
   buildReviewerInviteSubject,
   buildReviewerMailtoHref
 } from "./reviewerInvite.template";
@@ -48,6 +49,15 @@ describe("buildReviewerInviteBody", () => {
     const lines = body.split("\n");
     expect(lines.length).toBeGreaterThan(5);
     expect(lines.some((line) => line === "")).toBe(true);
+  });
+});
+
+describe("buildReviewerInviteClipboardText", () => {
+  it("собирает кому, тему и тело для вставки в почту", () => {
+    const text = buildReviewerInviteClipboardText("a@test.ru", "Тема", "Тело\nдва");
+    expect(text).toContain("Кому: a@test.ru");
+    expect(text).toContain("Тема: Тема");
+    expect(text).toContain("Тело\nдва");
   });
 });
 

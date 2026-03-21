@@ -18,7 +18,7 @@ body {
 }
 
 .app-shell {
-  max-width: 1140px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 24px 16px 40px;
 }
@@ -368,6 +368,17 @@ button {
   color: #067647;
   font-weight: 600;
   font-size: 14px;
+}
+
+.send-mail-error {
+  color: #b42318;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.reviewer-request-hint {
+  font-size: 13px;
+  max-width: 52rem;
 }
 
 .ml-8 {
