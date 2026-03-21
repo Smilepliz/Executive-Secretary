@@ -312,7 +312,7 @@ button {
 }
 
 .reviewer-grid--simple {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
 }
 
 .reviewer-grid__head {

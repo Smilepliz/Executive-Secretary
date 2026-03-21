@@ -93,6 +93,30 @@ function App(): JSX.Element {
       specialty: "Клиническая психология",
       keywords: "Психическое здоровье, Психотерапия, Диагностика",
       source: "database"
+    },
+    {
+      id: "db-babaeva",
+      fullName: "Бабаева Ксения",
+      email: "kseniya_babaeva@profi-studio.ru",
+      specialty: "—",
+      keywords: "—",
+      source: "database"
+    },
+    {
+      id: "db-kuznetsov-m",
+      fullName: "Кузнецов Михаил",
+      email: "mikhail_kuznetsov@profi-studio.ru",
+      specialty: "—",
+      keywords: "—",
+      source: "database"
+    },
+    {
+      id: "db-vavilov",
+      fullName: "Вавилов Александр",
+      email: "vavilov@profi-studio.ru",
+      specialty: "—",
+      keywords: "—",
+      source: "database"
     }
   ];
 
@@ -291,7 +315,6 @@ function App(): JSX.Element {
                     <thead>
                       <tr>
                         <th>Рецензент</th>
-                        <th>Электронная почта</th>
                         <th>Дата отправления</th>
                         <th>Статус запроса</th>
                       </tr>
@@ -300,7 +323,6 @@ function App(): JSX.Element {
                       {assignedReviewers.map((reviewer) => (
                         <tr key={reviewer.id}>
                           <td>{reviewer.fullName}</td>
-                          <td>{reviewer.email}</td>
                           <td>—</td>
                           <td className="request-cell">
                             <button type="button" className="ghost-button">

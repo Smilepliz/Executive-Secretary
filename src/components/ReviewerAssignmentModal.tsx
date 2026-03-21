@@ -46,7 +46,6 @@ function ReviewerAssignmentModal({
           <p className="label-strong">Рецензенты, предложенные автором</p>
           <div className="reviewer-grid reviewer-grid--simple">
             <div className="reviewer-grid__head">Рецензент</div>
-            <div className="reviewer-grid__head">Электронная почта</div>
             {authorSuggested.map((reviewer) => (
               <label key={reviewer.id} className="reviewer-row reviewer-row--simple">
                 <div>
@@ -57,7 +56,6 @@ function ReviewerAssignmentModal({
                   />
                   <span className="ml-8">{reviewer.fullName}</span>
                 </div>
-                <span>{reviewer.email}</span>
               </label>
             ))}
           </div>
