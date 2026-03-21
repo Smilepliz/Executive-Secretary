@@ -117,6 +117,14 @@ function App(): JSX.Element {
       specialty: "—",
       keywords: "—",
       source: "database"
+    },
+    {
+      id: "db-degtyarev",
+      fullName: "Дегтярев Роман Николаевич",
+      email: "degtyarev_r@mail.ru",
+      specialty: "—",
+      keywords: "—",
+      source: "database"
     }
   ];
 
