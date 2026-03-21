@@ -11,7 +11,10 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
   const [policy, setPolicy] = useState<PolicyChoice | "">("");
   const [originalityInput, setOriginalityInput] = useState<string>("");
   const [reportFile, setReportFile] = useState<File | null>(null);
+  /** Отчёт при выборе «Не соответствует редакционной политике» */
+  const [policyReportFile, setPolicyReportFile] = useState<File | null>(null);
   const [didTryFinish, setDidTryFinish] = useState(false);
+  const [didTryReject, setDidTryReject] = useState(false);
   const [saved, setSaved] = useState(false);
 
   const originalityNumber = useMemo(() => {
@@ -42,7 +45,7 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
   }, [policy, isOriginalityValid, requiresReport, reportFile]);
 
   const canReject = useMemo(() => {
-    if (policy === "not_match") return true;
+    if (policy === "not_match") return !!policyReportFile;
     if (policy !== "match") return false;
     if (!isOriginalityValid) return false;
     if (originalityNumber === null) return false;
@@ -73,9 +76,23 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
     return "Выберите результат по соответствию редакционной политике журнала.";
   }, [didTryFinish, policy]);
 
+  const policyReportError = useMemo(() => {
+    if (policy !== "not_match") return "";
+    if (!didTryReject) return "";
+    if (policyReportFile) return "";
+    return "Загрузите отчёт о проверке на соответствие редакционной политике.";
+  }, [policy, didTryReject, policyReportFile]);
+
   const fileChange = (fileList: FileList | null): void => {
     const file = fileList?.[0] ?? null;
     setReportFile(file);
+    setSaved(false);
+  };
+
+  const policyReportFileChange = (fileList: FileList | null): void => {
+    const file = fileList?.[0] ?? null;
+    setPolicyReportFile(file);
+    setDidTryReject(false);
     setSaved(false);
   };
 
@@ -94,6 +111,7 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
               onChange={() => {
                 setPolicy("match");
                 setDidTryFinish(false);
+                setDidTryReject(false);
                 setSaved(false);
               }}
             />
@@ -108,12 +126,39 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
               onChange={() => {
                 setPolicy("not_match");
                 setDidTryFinish(false);
+                setDidTryReject(false);
                 setSaved(false);
               }}
             />
             <span>Не соответствует редакционной политике</span>
           </label>
         </div>
+
+        {policy === "not_match" ? (
+          <div className="anti-policy-report mt-16">
+            <p className="label-strong">Отчёт о проверке на соответствие редакционной политике</p>
+            <p className="muted anti-policy-report__hint">
+              Загрузите файл с отчётом — он понадобится при отклонении по этому основанию.
+            </p>
+            <div className={`anti-upload mt-12 ${!policyReportFile && didTryReject ? "anti-upload--error" : ""}`}>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                onChange={(e) => {
+                  policyReportFileChange(e.target.files);
+                }}
+              />
+              <div className="anti-upload__content">
+                <div className="anti-upload__title">Переместите файл или выберите на компьютере</div>
+                <div className="muted anti-upload__sub">
+                  {policyReportFile ? `Выбрано: ${policyReportFile.name}` : "Форматы: PDF, Word, изображения"}
+                </div>
+              </div>
+            </div>
+            {policyReportError ? <div className="anti-error">{policyReportError}</div> : null}
+          </div>
+        ) : null}
+
         {policyError ? <div className="anti-error">{policyError}</div> : null}
       </div>
 
@@ -186,7 +231,17 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
           Завершить этап и отправить далее
         </button>
 
-        <button type="button" className="ghost-button" disabled={!canReject} onClick={onReject}>
+        <button
+          type="button"
+          className="ghost-button"
+          disabled={!canReject}
+          onClick={() => {
+            setDidTryReject(true);
+            if (policy === "not_match" && !policyReportFile) return;
+            if (!canReject) return;
+            onReject();
+          }}
+        >
           Отклонить
         </button>
       </div>

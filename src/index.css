@@ -418,6 +418,16 @@ button {
   padding: 12px;
 }
 
+.anti-policy-report {
+  border-top: 1px solid #eaecf0;
+  padding-top: 12px;
+}
+
+.anti-policy-report__hint {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
 .anti-radio-grid {
   display: grid;
   gap: 8px;
