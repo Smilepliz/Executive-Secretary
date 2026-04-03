@@ -8,7 +8,9 @@ import { scenarios } from "./domain/scenarios";
 import { workflowConfig } from "./domain/workflow.config";
 import {
   applyAction,
+  applyDocumentSubmissionUpdate,
   applyManualStatusSelection,
+  ensureDocumentSubmissionState,
   getAvailableActions,
   getCurrentStageId,
   getStatusById,
@@ -21,8 +23,16 @@ import {
   buildReviewerInviteSubject,
   buildReviewerMailtoHref
 } from "./domain/reviewerInvite.template";
-import { Article, HistoryRecord, ScenarioDefinition, StageDefinition, StatusId } from "./domain/workflow.types";
+import {
+  Article,
+  DocumentSubmissionUpdatePayload,
+  HistoryRecord,
+  ScenarioDefinition,
+  StageDefinition,
+  StatusId
+} from "./domain/workflow.types";
 import AntiplagiarismStep from "./components/AntiplagiarismStep";
+import DocumentSubmissionStep from "./components/DocumentSubmissionStep";
 
 interface ModalState {
   isOpen: boolean;
@@ -31,11 +41,11 @@ interface ModalState {
 }
 
 function makeArticle(scenario: ScenarioDefinition): Article {
-  return {
+  return ensureDocumentSubmissionState({
     id: `article-${scenario.id}`,
     title: scenario.articleTitle,
     currentStatus: scenario.initialStatus
-  };
+  });
 }
 
 function createScenarioSwitchLog(scenario: ScenarioDefinition): HistoryRecord {
@@ -167,7 +177,8 @@ function App(): JSX.Element {
     "Запустить проверку":
       "Система запустит проверку на антиплагиат. После завершения вы получите результат.",
     "Проверка пройдена":
-      "Если результат проверки положительный, статья автоматически перейдет к этапу подбора рецензентов.",
+      "Статья перейдёт на этап предоставления документов; после готовности материалов — к назначению рецензентов.",
+    "К назначению рецензентов": "Статья перейдёт к подбору рецензентов на этом же процессе.",
     "Назначение рецензентов": "После назначения рецензентов им будут отправлены запросы.",
     "Отправить на рецензирование": "Статья будет отправлена рецензентам и перейдет в активное рецензирование.",
     "Запросить правки": "Автор получит комментарии и сможет отправить обновленную версию.",
@@ -177,11 +188,25 @@ function App(): JSX.Element {
     "Опубликовать": "Статья станет доступна читателям."
   };
   const primaryAction = availableActions[0];
-  const nextActionHint = primaryAction
-    ? hintByActionLabel[primaryAction.label] ?? "Система выполнит следующий шаг процесса."
-    : "Сейчас ожидается автоматический системный шаг. Обновление произойдет без вашего участия.";
+  const nextActionHint = useMemo(() => {
+    if (currentStageId === "document_submission") {
+      if (article.currentStatus === "doc_waiting") {
+        return "При необходимости измените сроки и статус через «Редактировать». Когда материалы получены, смените статус на «Материалы получены…» — затем станет доступна кнопка «К назначению рецензентов».";
+      }
+      if (article.currentStatus === "doc_ready_for_reviewers") {
+        return "Нажмите «К назначению рецензентов», чтобы перейти к подбору рецензентов.";
+      }
+    }
+    if (primaryAction) {
+      return hintByActionLabel[primaryAction.label] ?? "Система выполнит следующий шаг процесса.";
+    }
+    return "Сейчас ожидается автоматический системный шаг. Обновление произойдет без вашего участия.";
+  }, [currentStageId, article.currentStatus, primaryAction]);
+
+  const articleForDocumentSubmission = useMemo(() => ensureDocumentSubmissionState(article), [article]);
 
   const shouldShowAntiForm = article.currentStatus === "anti_in_progress";
+  const shouldShowDocumentSubmission = currentStageId === "document_submission";
   const shouldShowReviewerTable =
     (article.currentStatus === "reviewers_selection" || article.currentStatus === "reviewers_assigned") &&
     assignedReviewers.length > 0;
@@ -320,6 +345,12 @@ function App(): JSX.Element {
     closeModal();
   };
 
+  const handleDocumentSubmissionApply = (payload: DocumentSubmissionUpdatePayload): void => {
+    const result = applyDocumentSubmissionUpdate(workflowConfig, article, payload);
+    setArticle(result.article);
+    appendLogs(result.historyRecords);
+  };
+
   return (
     <div className="app-shell">
       <header className="page-header">
@@ -380,7 +411,22 @@ function App(): JSX.Element {
             />
           ) : (
             <>
-              <ActionPanel actions={availableActions} onRunAction={runAction} />
+              {shouldShowDocumentSubmission ? (
+                <DocumentSubmissionStep
+                  article={articleForDocumentSubmission}
+                  statuses={getStatusesByStage(workflowConfig, "document_submission")}
+                  onApply={handleDocumentSubmissionApply}
+                />
+              ) : null}
+              <ActionPanel
+                actions={availableActions}
+                onRunAction={runAction}
+                emptyMessage={
+                  shouldShowDocumentSubmission
+                    ? "Сначала отметьте готовность материалов в таблице выше (статус «Материалы получены…»), затем появится кнопка перехода к рецензентам."
+                    : undefined
+                }
+              />
               {shouldShowReviewerTable ? (
                 <div className="mt-16">
                   <p className="label-strong">Назначенные рецензенты</p>

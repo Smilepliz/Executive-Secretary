@@ -12,9 +12,29 @@ function formatTime(iso: string): string {
   });
 }
 
+function formatIsoDateRu(iso: string): string {
+  const parts = iso.split("-").map(Number);
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  return new Date(y, m - 1, d).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+}
+
 function humanizeAction(record: HistoryRecord): string {
   if (record.actionLabel.includes("Запустить проверку")) return "Запущена проверка на антиплагиат";
   if (record.actionLabel.includes("Проверка пройдена")) return "Антиплагиат пройден";
+  if (record.actionLabel.includes("Системный переход: этап предоставления документов")) {
+    return "Переход к этапу предоставления документов";
+  }
+  if (record.actionLabel.includes("Изменение статуса и сроков предоставления документов")) {
+    return "Обновлены статус и/или сроки предоставления документов";
+  }
+  if (record.actionLabel.includes("К назначению рецензентов")) {
+    return "Переход к назначению рецензентов";
+  }
   if (
     record.actionLabel.includes("Назначить рецензентов") ||
     record.actionLabel.includes("Назначение рецензентов")
@@ -44,6 +64,28 @@ function HistoryPanel({ history }: HistoryPanelProps): JSX.Element {
                 <span>{formatTime(record.timeIso)}</span>
               </div>
               <div className="muted">{humanizeAction(record)}</div>
+              {record.metadata ? (
+                <div className="history-item__meta muted mt-8">
+                  {(() => {
+                    const m = record.metadata;
+                    const prevF = m.previousDeadlineFrom;
+                    const prevT = m.previousDeadlineTo;
+                    const datesChanged =
+                      prevF &&
+                      prevT &&
+                      m.deadlineFrom &&
+                      m.deadlineTo &&
+                      (prevF !== m.deadlineFrom || prevT !== m.deadlineTo);
+                    return datesChanged ? (
+                      <div>
+                        Сроки: {formatIsoDateRu(prevF!)} — {formatIsoDateRu(prevT!)} → {formatIsoDateRu(m.deadlineFrom!)} —{" "}
+                        {formatIsoDateRu(m.deadlineTo!)}
+                      </div>
+                    ) : null;
+                  })()}
+                  {record.metadata.reason ? <div>Причина: {record.metadata.reason}</div> : null}
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>

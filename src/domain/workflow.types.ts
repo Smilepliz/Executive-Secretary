@@ -1,9 +1,16 @@
-export type StageId = "antiplagiarism" | "reviewers" | "review" | "publication";
+export type StageId =
+  | "antiplagiarism"
+  | "document_submission"
+  | "reviewers"
+  | "review"
+  | "publication";
 
 export type StatusId =
   | "anti_pending"
   | "anti_in_progress"
   | "anti_passed"
+  | "doc_waiting"
+  | "doc_ready_for_reviewers"
   | "reviewers_selection"
   | "reviewers_assigned"
   | "review_in_progress"
@@ -12,6 +19,19 @@ export type StatusId =
   | "article_rejected"
   | "publication_ready"
   | "published";
+
+export interface DocumentSubmissionState {
+  deadlineFrom: string;
+  deadlineTo: string;
+}
+
+export interface HistoryRecordMetadata {
+  reason?: string;
+  deadlineFrom?: string;
+  deadlineTo?: string;
+  previousDeadlineFrom?: string;
+  previousDeadlineTo?: string;
+}
 
 export interface StageDefinition {
   id: StageId;
@@ -52,6 +72,7 @@ export interface Article {
   id: string;
   title: string;
   currentStatus: StatusId;
+  documentSubmission?: DocumentSubmissionState;
 }
 
 export interface HistoryRecord {
@@ -60,7 +81,8 @@ export interface HistoryRecord {
   actionLabel: string;
   fromStatus: StatusId;
   toStatus: StatusId;
-  source: "user" | "system" | "manual-stage";
+  source: "user" | "system" | "manual-stage" | "secretary";
+  metadata?: HistoryRecordMetadata;
 }
 
 export interface WorkflowStepResult {
@@ -69,8 +91,15 @@ export interface WorkflowStepResult {
 }
 
 export interface ScenarioDefinition {
-  id: "success" | "rejected" | "changes";
+  id: "success" | "rejected" | "changes" | "documentSubmission";
   label: string;
   articleTitle: string;
   initialStatus: StatusId;
+}
+
+export interface DocumentSubmissionUpdatePayload {
+  nextStatusId: StatusId;
+  deadlineFrom: string;
+  deadlineTo: string;
+  reason: string;
 }

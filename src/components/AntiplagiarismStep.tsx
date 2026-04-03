@@ -101,6 +101,53 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
       <h3 className="anti-step__title">Антиплагиат</h3>
 
       <div className="anti-step__block">
+        <div className="anti-step__block-section">
+          <p className="label-strong">Процент оригинальности, %</p>
+          <div className="anti-field-row">
+            <input
+              className="anti-input"
+              type="number"
+              inputMode="decimal"
+              min={0}
+              max={100}
+              step={0.1}
+              placeholder="Например, 82.5"
+              value={originalityInput}
+              onChange={(e) => {
+                setOriginalityInput(e.target.value);
+                setDidTryFinish(false);
+                setSaved(false);
+              }}
+            />
+            <div className="anti-field-hint">
+              {requiresReport ? <span className="anti-warn">Если &lt; 75 — нужен отчет</span> : <span>Можно завершать этап</span>}
+            </div>
+          </div>
+          {originalityError ? <div className="anti-error">{originalityError}</div> : null}
+        </div>
+
+        <div className="anti-step__block-section">
+          <p className="label-strong">Отчет по проверке (при необходимости)</p>
+          <div className={`anti-upload ${requiresReport && !reportFile ? "anti-upload--error" : ""}`}>
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => {
+                fileChange(e.target.files);
+              }}
+            />
+            <div className="anti-upload__content">
+              <div className="anti-upload__title">Переместите файл или выберите на компьютере</div>
+              <div className="muted anti-upload__sub">
+                {reportFile ? `Выбрано: ${reportFile.name}` : requiresReport ? "Требуется при оригинальности ниже 75%" : "Можно загрузить для подтверждения"}
+              </div>
+            </div>
+          </div>
+          {reportError ? <div className="anti-error">{reportError}</div> : null}
+        </div>
+      </div>
+
+      <div className="anti-step__block">
         <p className="label-strong">Результаты проверки на соответствие редакционной политике журнала</p>
         <div className="anti-radio-grid">
           <label className="anti-radio-option">
@@ -160,51 +207,6 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
         ) : null}
 
         {policyError ? <div className="anti-error">{policyError}</div> : null}
-      </div>
-
-      <div className="anti-step__block">
-        <p className="label-strong">Процент оригинальности, %</p>
-        <div className="anti-field-row">
-          <input
-            className="anti-input"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            max={100}
-            step={0.1}
-            placeholder="Например, 82.5"
-            value={originalityInput}
-            onChange={(e) => {
-              setOriginalityInput(e.target.value);
-              setDidTryFinish(false);
-              setSaved(false);
-            }}
-          />
-          <div className="anti-field-hint">
-            {requiresReport ? <span className="anti-warn">Если &lt; 75 — нужен отчет</span> : <span>Можно завершать этап</span>}
-          </div>
-        </div>
-        {originalityError ? <div className="anti-error">{originalityError}</div> : null}
-      </div>
-
-      <div className="anti-step__block">
-        <p className="label-strong">Отчет по проверке (при необходимости)</p>
-        <div className={`anti-upload ${requiresReport && !reportFile ? "anti-upload--error" : ""}`}>
-          <input
-            type="file"
-            accept=".pdf,.png,.jpg,.jpeg"
-            onChange={(e) => {
-              fileChange(e.target.files);
-            }}
-          />
-          <div className="anti-upload__content">
-            <div className="anti-upload__title">Переместите файл или выберите на компьютере</div>
-            <div className="muted anti-upload__sub">
-              {reportFile ? `Выбрано: ${reportFile.name}` : requiresReport ? "Требуется при оригинальности ниже 75%" : "Можно загрузить для подтверждения"}
-            </div>
-          </div>
-        </div>
-        {reportError ? <div className="anti-error">{reportError}</div> : null}
       </div>
 
       <div className="anti-actions">

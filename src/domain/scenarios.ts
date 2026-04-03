@@ -18,5 +18,11 @@ export const scenarios: ScenarioDefinition[] = [
     label: "Требуются правки",
     articleTitle: "Семиотика цифрового чтения",
     initialStatus: "review_changes_required"
+  },
+  {
+    id: "documentSubmission",
+    label: "Предоставление документов",
+    articleTitle: "Лев Выготский: письма к Эмме",
+    initialStatus: "doc_waiting"
   }
 ];

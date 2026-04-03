@@ -3,11 +3,17 @@ import { WorkflowAction } from "../domain/workflow.types";
 interface ActionPanelProps {
   actions: WorkflowAction[];
   onRunAction: (actionId: string) => void;
+  /** Если действий нет — показать этот текст вместо стандартного про системный шаг */
+  emptyMessage?: string;
 }
 
-function ActionPanel({ actions, onRunAction }: ActionPanelProps): JSX.Element {
+function ActionPanel({ actions, onRunAction, emptyMessage }: ActionPanelProps): JSX.Element {
   if (actions.length === 0) {
-    return <p className="muted">Ожидается автоматическое действие системы.</p>;
+    return (
+      <p className="muted">
+        {emptyMessage ?? "Ожидается автоматическое действие системы."}
+      </p>
+    );
   }
 
   const [primaryAction, ...secondaryActions] = actions;

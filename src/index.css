@@ -61,7 +61,19 @@ body {
 .stage-stepper {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .stage-stepper {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .stage-stepper {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .stage-step {
@@ -435,6 +447,12 @@ button {
   padding: 12px;
 }
 
+.anti-step__block-section + .anti-step__block-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eaecf0;
+}
+
 .anti-policy-report {
   border-top: 1px solid #eaecf0;
   padding-top: 12px;
@@ -549,4 +567,124 @@ button {
   .anti-field-row {
     grid-template-columns: 1fr;
   }
+}
+
+.doc-submission-step__title {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.doc-submission-step__lead {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 52rem;
+}
+
+.doc-submission-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.doc-submission-table th,
+.doc-submission-table td {
+  border: 1px solid #eaecf0;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.doc-submission-table thead {
+  background: #f9fafb;
+}
+
+.doc-submission-table__status {
+  font-weight: 600;
+}
+
+.doc-submission-table__status--waiting {
+  color: #067647;
+}
+
+.doc-submission-table__status--ready {
+  color: #1849a9;
+}
+
+.doc-submission-table__deadlines {
+  white-space: nowrap;
+}
+
+.doc-submission-table__th-action {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.doc-submission-table__action-cell {
+  vertical-align: middle;
+}
+
+.doc-submission-table__edit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: #175cd3;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.doc-submission-table__edit-link:hover {
+  color: #1849a9;
+}
+
+.doc-submission-table__edit-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.doc-submission-modal__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.doc-submission-modal .doc-submission-modal__field {
+  margin-top: 14px;
+}
+
+.doc-submission-modal label {
+  display: block;
+  font-size: 12px;
+  color: #667085;
+  margin-bottom: 4px;
+}
+
+.doc-submission-modal__select,
+.doc-submission-modal__input,
+.doc-submission-modal__textarea {
+  width: 100%;
+  font: inherit;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.doc-submission-modal__dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.doc-submission-modal__error {
+  color: #b42318;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.doc-submission-modal .modal-actions {
+  margin-top: 16px;
 }

@@ -1,6 +1,8 @@
 import {
   Article,
+  DocumentSubmissionUpdatePayload,
   HistoryRecord,
+  HistoryRecordMetadata,
   StageId,
   StatusDefinition,
   StatusId,
@@ -14,6 +16,47 @@ const uid = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 8
 
 const statusMap = (statuses: StatusDefinition[]): Map<StatusId, StatusDefinition> =>
   new Map(statuses.map((status) => [status.id, status]));
+
+const DOC_SUBMISSION_STATUSES: StatusId[] = ["doc_waiting", "doc_ready_for_reviewers"];
+
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Демо: сроки по умолчанию — +3 и +5 дней от текущей даты. */
+export function defaultDocumentSubmissionDeadlines(now: Date = new Date()): {
+  deadlineFrom: string;
+  deadlineTo: string;
+} {
+  const from = new Date(now);
+  from.setDate(from.getDate() + 3);
+  const to = new Date(now);
+  to.setDate(to.getDate() + 5);
+  return {
+    deadlineFrom: formatLocalDate(from),
+    deadlineTo: formatLocalDate(to)
+  };
+}
+
+export function ensureDocumentSubmissionState(article: Article): Article {
+  if (article.currentStatus !== "doc_waiting" && article.currentStatus !== "doc_ready_for_reviewers") {
+    return article;
+  }
+  if (article.documentSubmission?.deadlineFrom && article.documentSubmission?.deadlineTo) {
+    return article;
+  }
+  return { ...article, documentSubmission: defaultDocumentSubmissionDeadlines() };
+}
+
+function parseDateOnly(s: string): number {
+  const parts = s.trim().split("-").map(Number);
+  if (parts.length !== 3) return Number.NaN;
+  const [y, m, d] = parts;
+  return new Date(y, m - 1, d).getTime();
+}
 
 export function getCurrentStageId(config: WorkflowConfig, statusId: StatusId): StageId {
   const map = statusMap(config.statuses);
@@ -45,7 +88,8 @@ function createHistoryRecord(
   actionLabel: string,
   fromStatus: StatusId,
   toStatus: StatusId,
-  source: HistoryRecord["source"]
+  source: HistoryRecord["source"],
+  metadata?: HistoryRecordMetadata
 ): HistoryRecord {
   return {
     id: uid(),
@@ -53,7 +97,8 @@ function createHistoryRecord(
     actionLabel,
     fromStatus,
     toStatus,
-    source
+    source,
+    ...(metadata ? { metadata } : {})
   };
 }
 
@@ -79,6 +124,7 @@ function applySystemTransitions(config: WorkflowConfig, article: Article): Workf
     const nextStatus = config.defaultStatusByStage[rule.targetStageId];
     const fromStatus = currentArticle.currentStatus;
     currentArticle = { ...currentArticle, currentStatus: nextStatus };
+    currentArticle = ensureDocumentSubmissionState(currentArticle);
     logs.push(createHistoryRecord(rule.actionLabel, fromStatus, nextStatus, "system"));
   }
 
@@ -111,7 +157,7 @@ export function applyManualStatusSelection(
   actionLabel: string
 ): WorkflowStepResult {
   const fromStatus = article.currentStatus;
-  const manuallyUpdated: Article = { ...article, currentStatus: selectedStatusId };
+  let manuallyUpdated: Article = ensureDocumentSubmissionState({ ...article, currentStatus: selectedStatusId });
   const manualLog = createHistoryRecord(actionLabel, fromStatus, selectedStatusId, "manual-stage");
   const systemResult = applySystemTransitions(config, manuallyUpdated);
 
@@ -119,4 +165,66 @@ export function applyManualStatusSelection(
     article: systemResult.article,
     historyRecords: [manualLog, ...systemResult.historyRecords]
   };
+}
+
+export function applyDocumentSubmissionUpdate(
+  config: WorkflowConfig,
+  article: Article,
+  payload: DocumentSubmissionUpdatePayload
+): WorkflowStepResult {
+  const stageId = getCurrentStageId(config, article.currentStatus);
+  if (stageId !== "document_submission") {
+    throw new Error("Действие доступно только на этапе предоставления документов");
+  }
+  if (!DOC_SUBMISSION_STATUSES.includes(article.currentStatus)) {
+    throw new Error("Недопустимый текущий статус");
+  }
+  if (!DOC_SUBMISSION_STATUSES.includes(payload.nextStatusId)) {
+    throw new Error("Недопустимый целевой статус");
+  }
+
+  const fromTs = parseDateOnly(payload.deadlineFrom);
+  const toTs = parseDateOnly(payload.deadlineTo);
+  if (Number.isNaN(fromTs) || Number.isNaN(toTs)) {
+    throw new Error("Некорректный формат дат (ожидается ГГГГ-ММ-ДД)");
+  }
+  if (fromTs > toTs) {
+    throw new Error("Дата начала не может быть позже даты окончания");
+  }
+
+  const prev = article.documentSubmission ?? defaultDocumentSubmissionDeadlines();
+  const df = payload.deadlineFrom.trim();
+  const dt = payload.deadlineTo.trim();
+  const datesChanged = prev.deadlineFrom !== df || prev.deadlineTo !== dt;
+
+  if (datesChanged && !payload.reason.trim()) {
+    throw new Error("Укажите причину изменения сроков");
+  }
+
+  const updatedArticle: Article = {
+    ...article,
+    currentStatus: payload.nextStatusId,
+    documentSubmission: {
+      deadlineFrom: df,
+      deadlineTo: dt
+    }
+  };
+
+  const metadata: HistoryRecordMetadata = {
+    reason: payload.reason.trim() || undefined,
+    deadlineFrom: df,
+    deadlineTo: dt,
+    previousDeadlineFrom: prev.deadlineFrom,
+    previousDeadlineTo: prev.deadlineTo
+  };
+
+  const log = createHistoryRecord(
+    "Изменение статуса и сроков предоставления документов",
+    article.currentStatus,
+    payload.nextStatusId,
+    "secretary",
+    metadata
+  );
+
+  return { article: updatedArticle, historyRecords: [log] };
 }
