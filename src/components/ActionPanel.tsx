@@ -25,7 +25,7 @@ function ActionPanel({ actions, onRunAction, emptyMessage }: ActionPanelProps): 
         <button
           key={primaryAction.id}
           type="button"
-          className="primary-button primary-button--large"
+          className="btn-primary-lg"
           onClick={() => onRunAction(primaryAction.id)}
         >
           {primaryAction.label}

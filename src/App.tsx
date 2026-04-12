@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
+import { CaretLeft } from "@phosphor-icons/react";
 import ActionPanel from "./components/ActionPanel";
-import HistoryPanel from "./components/HistoryPanel";
+import EditorialHeader from "./components/EditorialHeader";
+import EditorialSidebar from "./components/EditorialSidebar";
 import ManualStageModal from "./components/ManualStageModal";
 import ReviewerAssignmentModal, { ReviewerOption } from "./components/ReviewerAssignmentModal";
-import StageStepper from "./components/StageStepper";
+import WorkflowSideRail from "./components/WorkflowSideRail";
+import { getStagePillLabel } from "./domain/editorialNav";
 import { scenarios } from "./domain/scenarios";
 import { workflowConfig } from "./domain/workflow.config";
 import {
@@ -174,6 +177,8 @@ function App(): JSX.Element {
     [currentStageIndex]
   );
   const hintByActionLabel: Record<string, string> = {
+    "Принять рукопись в работу":
+      "Начнётся этап проверки на антиплагиат и соответствие требованиям журнала.",
     "Запустить проверку":
       "Система запустит проверку на антиплагиат. После завершения вы получите результат.",
     "Проверка пройдена":
@@ -351,142 +356,187 @@ function App(): JSX.Element {
     appendLogs(result.historyRecords);
   };
 
+  const showLaunchHero =
+    !shouldShowAntiForm && article.currentStatus === "anti_pending" && Boolean(primaryAction);
+
+  const railHeadline = useMemo(() => {
+    if (article.currentStatus === "anti_in_progress") {
+      return "Идет проверка на антиплагиат";
+    }
+    return currentStatus.label;
+  }, [article.currentStatus, currentStatus.label]);
+
+  const railTime = useMemo(() => {
+    const fmt = (iso: string): string =>
+      new Date(iso).toLocaleString("ru-RU", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    if (article.currentStatus === "anti_in_progress") {
+      const rec = history.find((h) => h.toStatus === "anti_in_progress");
+      if (rec) return fmt(rec.timeIso);
+    }
+    if (history.length > 0) {
+      return fmt(history[0].timeIso);
+    }
+    return undefined;
+  }, [article.currentStatus, history]);
+
   return (
-    <div className="app-shell">
-      <header className="page-header">
-        <div>
-          <h1>Прототип редакционного workflow</h1>
-          <p className="muted">Статья: {article.title}</p>
-        </div>
-      </header>
+    <div className="editorial-app">
+      <EditorialHeader />
 
-      {showDemoScenarios && (
-        <section className="panel">
-          <h3>Сценарии демонстрации</h3>
-          <div className="scenario-row">
-            {scenarios.map((scenario) => (
-              <button
-                key={scenario.id}
-                type="button"
-                className={`ghost-button ${activeScenario.id === scenario.id ? "ghost-button--active" : ""}`}
-                onClick={() => switchScenario(scenario)}
-              >
-                {scenario.label}
+      <div className="editorial-body">
+        <EditorialSidebar currentStageId={currentStageId} onSubstepClick={openManualStageModal} />
+
+        <div className="editorial-main">
+          {showDemoScenarios ? (
+            <section className="panel" style={{ marginBottom: 12 }}>
+              <h3 className="label-strong">Сценарии демонстрации</h3>
+              <p className="muted mt-8" style={{ fontSize: 13 }}>
+                Демо: пункты слева под «Редактура статьи» открывают ручной выбор статуса этапа.
+              </p>
+              <div className="scenario-row mt-12">
+                {scenarios.map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    className={`ghost-button ${activeScenario.id === scenario.id ? "ghost-button--active" : ""}`}
+                    onClick={() => switchScenario(scenario)}
+                  >
+                    {scenario.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <div className="editorial-card">
+            <header className="editorial-card__head">
+              <button type="button" className="editorial-breadcrumb">
+                <CaretLeft size={16} weight="bold" aria-hidden />
+                Вернуться к таблице редактора
               </button>
-            ))}
-          </div>
-        </section>
-      )}
+              <h1 className="editorial-card__title">{article.title}</h1>
+              <div className="editorial-card__pill">
+                <span className="editorial-status-pill">{getStagePillLabel(currentStageId)}</span>
+              </div>
+            </header>
 
-      <section className="panel">
-        <h3>Этапы процесса</h3>
-        <StageStepper
-          stages={workflowConfig.stages}
-          currentStageId={currentStageId}
-          onStageClick={openManualStageModal}
-        />
-        <p className="muted mt-12">
-          {nextStage ? `Следующий этап: ${nextStage.label}` : "Следующий этап: процесс завершен"}
-        </p>
-        <p className="muted">Демо-режим: клик по этапу откроет выбор статуса этого этапа.</p>
-      </section>
+            <div className="editorial-card__split">
+              <div className="editorial-card__main">
+                {shouldShowAntiForm ? (
+                  <AntiplagiarismStep
+                    onFinish={() => runAction("mark-anti-passed")}
+                    onReject={() => runAction("reject-after-anti")}
+                  />
+                ) : showLaunchHero && primaryAction ? (
+                  <div className="launch-workflow">
+                    <p className="launch-workflow__text">
+                      Когда вы нажмёте эту кнопку, начнётся процесс редактуры статьи.
+                    </p>
+                    <div>
+                      <button
+                        type="button"
+                        className="btn-primary-lg"
+                        onClick={() => runAction(primaryAction.id)}
+                      >
+                        {primaryAction.label}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {shouldShowDocumentSubmission ? (
+                      <DocumentSubmissionStep
+                        article={articleForDocumentSubmission}
+                        statuses={getStatusesByStage(workflowConfig, "document_submission")}
+                        onApply={handleDocumentSubmissionApply}
+                      />
+                    ) : null}
+                    <div className="mt-20">
+                      <p className="label-strong">Действия</p>
+                      <ActionPanel
+                        actions={availableActions}
+                        onRunAction={runAction}
+                        emptyMessage={
+                          shouldShowDocumentSubmission
+                            ? "Сначала отметьте готовность материалов в таблице выше (статус «Материалы получены…»), затем появится кнопка перехода к рецензентам."
+                            : undefined
+                        }
+                      />
+                    </div>
+                    {shouldShowReviewerTable ? (
+                      <div className="mt-16">
+                        <p className="label-strong">Назначенные рецензенты</p>
+                        {sendMailError ? (
+                          <p className="send-mail-error mt-8" role="alert">
+                            Не удалось отправить письмо: {sendMailError}
+                          </p>
+                        ) : null}
+                        {!isEmailJsConfigured() ? (
+                          <p className="muted mt-8 reviewer-request-hint">
+                            По кнопке «Отправить письмо» текст письма копируется в буфер — откройте почту в браузере
+                            (Gmail, Mail.ru и т.д.) и вставьте в письмо сочетанием «Ctrl+V».
+                          </p>
+                        ) : null}
+                        <table className="reviewers-table mt-8">
+                          <thead>
+                            <tr>
+                              <th>Рецензент</th>
+                              <th>Дата отправления</th>
+                              <th>Статус запроса</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {assignedReviewers.map((reviewer) => {
+                              const sentAt = sentRequests[reviewer.id];
+                              return (
+                                <tr key={reviewer.id}>
+                                  <td>{reviewer.fullName}</td>
+                                  <td>{sentAt ?? "—"}</td>
+                                  <td className="request-cell">
+                                    {sentAt ? (
+                                      <span className="reviewer-request-sent">Отправлено</span>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="ghost-button"
+                                        disabled={sendingReviewerId === reviewer.id}
+                                        onClick={() => void sendReviewerRequest(reviewer.id)}
+                                      >
+                                        {sendingReviewerId === reviewer.id ? "Отправка…" : "Отправить письмо"}
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null}
+                    <div className="hint-box mt-20">
+                      <p className="label-strong">Что произойдет дальше?</p>
+                      <p className="muted">
+                        {nextStage ? `Следующий этап: ${nextStage.label}. ` : null}
+                        {nextActionHint}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
 
-      <main className="content-grid">
-        <section className="panel panel--fill">
-          <h3>Где сейчас статья</h3>
-          <div className="facts facts--single">
-            <div>
-              <span className="label-strong">
-                📍 Сейчас вы на этапе:{" "}
-                {workflowConfig.stages.find((stage) => stage.id === currentStageId)?.label}
-              </span>
-              <p className="muted mt-8">Технический статус: {currentStatus.label}</p>
+              <div className="editorial-card__vline" aria-hidden />
+
+              <WorkflowSideRail statusHeadline={railHeadline} statusTime={railTime} history={history} />
             </div>
           </div>
-          <h3 className="mt-20">Что можно сделать</h3>
-          {shouldShowAntiForm ? (
-            <AntiplagiarismStep
-              onFinish={() => runAction("mark-anti-passed")}
-              onReject={() => runAction("reject-after-anti")}
-            />
-          ) : (
-            <>
-              {shouldShowDocumentSubmission ? (
-                <DocumentSubmissionStep
-                  article={articleForDocumentSubmission}
-                  statuses={getStatusesByStage(workflowConfig, "document_submission")}
-                  onApply={handleDocumentSubmissionApply}
-                />
-              ) : null}
-              <ActionPanel
-                actions={availableActions}
-                onRunAction={runAction}
-                emptyMessage={
-                  shouldShowDocumentSubmission
-                    ? "Сначала отметьте готовность материалов в таблице выше (статус «Материалы получены…»), затем появится кнопка перехода к рецензентам."
-                    : undefined
-                }
-              />
-              {shouldShowReviewerTable ? (
-                <div className="mt-16">
-                  <p className="label-strong">Назначенные рецензенты</p>
-                  {sendMailError ? (
-                    <p className="send-mail-error mt-8" role="alert">
-                      Не удалось отправить письмо: {sendMailError}
-                    </p>
-                  ) : null}
-                  {!isEmailJsConfigured() ? (
-                    <p className="muted mt-8 reviewer-request-hint">
-                      По кнопке «Отправить письмо» текст письма копируется в буфер — откройте почту в браузере (Gmail,
-                      Mail.ru и т.д.) и вставьте в письмо сочетанием «Ctrl+V».
-                    </p>
-                  ) : null}
-                  <table className="reviewers-table mt-8">
-                    <thead>
-                      <tr>
-                        <th>Рецензент</th>
-                        <th>Дата отправления</th>
-                        <th>Статус запроса</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assignedReviewers.map((reviewer) => {
-                        const sentAt = sentRequests[reviewer.id];
-                        return (
-                          <tr key={reviewer.id}>
-                            <td>{reviewer.fullName}</td>
-                            <td>{sentAt ?? "—"}</td>
-                            <td className="request-cell">
-                              {sentAt ? (
-                                <span className="reviewer-request-sent">Отправлено</span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="ghost-button"
-                                  disabled={sendingReviewerId === reviewer.id}
-                                  onClick={() => void sendReviewerRequest(reviewer.id)}
-                                >
-                                  {sendingReviewerId === reviewer.id ? "Отправка…" : "Отправить письмо"}
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-              <div className="hint-box mt-20">
-                <p className="label-strong">Что произойдет дальше?</p>
-                <p className="muted">{nextActionHint}</p>
-              </div>
-            </>
-          )}
-        </section>
-
-        <HistoryPanel history={history} />
-      </main>
+        </div>
+      </div>
 
       <ManualStageModal
         isOpen={modalState.isOpen}

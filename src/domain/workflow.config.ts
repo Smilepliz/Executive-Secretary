@@ -41,7 +41,7 @@ export const workflowConfig: WorkflowConfig = {
   actions: [
     {
       id: "start-anti-check",
-      label: "Запустить проверку",
+      label: "Принять рукопись в работу",
       fromStatus: "anti_pending",
       toStatus: "anti_in_progress"
     },

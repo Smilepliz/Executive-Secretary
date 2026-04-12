@@ -24,6 +24,7 @@ function formatIsoDateRu(iso: string): string {
 }
 
 function humanizeAction(record: HistoryRecord): string {
+  if (record.actionLabel.includes("Принять рукопись в работу")) return "Рукопись принята в работу, запущена проверка";
   if (record.actionLabel.includes("Запустить проверку")) return "Запущена проверка на антиплагиат";
   if (record.actionLabel.includes("Проверка пройдена")) return "Антиплагиат пройден";
   if (record.actionLabel.includes("Системный переход: этап предоставления документов")) {

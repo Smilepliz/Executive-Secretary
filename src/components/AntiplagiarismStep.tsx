@@ -11,7 +11,7 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
   const [policy, setPolicy] = useState<PolicyChoice | "">("");
   const [originalityInput, setOriginalityInput] = useState<string>("");
   const [reportFile, setReportFile] = useState<File | null>(null);
-  /** Отчёт при выборе «Не соответствует редакционной политике» */
+  /** Отчёт при выборе «Не соответствует требованиям журнала» */
   const [policyReportFile, setPolicyReportFile] = useState<File | null>(null);
   const [didTryFinish, setDidTryFinish] = useState(false);
   const [didTryReject, setDidTryReject] = useState(false);
@@ -50,7 +50,7 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
     if (!isOriginalityValid) return false;
     if (originalityNumber === null) return false;
     if (Number.isNaN(originalityNumber)) return false;
-    if (originalityNumber >= 75) return false; // при успешных условиях обычно не требуется отклонение
+    if (originalityNumber >= 75) return false;
     return !reportFile;
   }, [policy, isOriginalityValid, originalityNumber, reportFile]);
 
@@ -72,15 +72,15 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
   const policyError = useMemo(() => {
     if (!didTryFinish) return "";
     if (policy === "match") return "";
-    if (policy === "not_match") return ""; // отклонение обработается отдельной кнопкой
-    return "Выберите результат по соответствию редакционной политике журнала.";
+    if (policy === "not_match") return "";
+    return "Выберите результат проверки на соответствие требованиям журнала.";
   }, [didTryFinish, policy]);
 
   const policyReportError = useMemo(() => {
     if (policy !== "not_match") return "";
     if (!didTryReject) return "";
     if (policyReportFile) return "";
-    return "Загрузите отчёт о проверке на соответствие редакционной политике.";
+    return "Загрузите отчёт о проверке на соответствие требованиям журнала.";
   }, [policy, didTryReject, policyReportFile]);
 
   const fileChange = (fileList: FileList | null): void => {
@@ -97,132 +97,140 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
   };
 
   return (
-    <div className="anti-step">
-      <h3 className="anti-step__title">Антиплагиат</h3>
-
-      <div className="anti-step__block">
-        <div className="anti-step__block-section">
-          <p className="label-strong">Процент оригинальности, %</p>
-          <div className="anti-field-row">
-            <input
-              className="anti-input"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={100}
-              step={0.1}
-              placeholder="Например, 82.5"
-              value={originalityInput}
-              onChange={(e) => {
-                setOriginalityInput(e.target.value);
-                setDidTryFinish(false);
-                setSaved(false);
-              }}
-            />
-            <div className="anti-field-hint">
-              {requiresReport ? <span className="anti-warn">Если &lt; 75 — нужен отчет</span> : <span>Можно завершать этап</span>}
-            </div>
-          </div>
-          {originalityError ? <div className="anti-error">{originalityError}</div> : null}
-        </div>
-
-        <div className="anti-step__block-section">
-          <p className="label-strong">Отчет по проверке (при необходимости)</p>
-          <div className={`anti-upload ${requiresReport && !reportFile ? "anti-upload--error" : ""}`}>
-            <input
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => {
-                fileChange(e.target.files);
-              }}
-            />
-            <div className="anti-upload__content">
-              <div className="anti-upload__title">Переместите файл или выберите на компьютере</div>
-              <div className="muted anti-upload__sub">
-                {reportFile ? `Выбрано: ${reportFile.name}` : requiresReport ? "Требуется при оригинальности ниже 75%" : "Можно загрузить для подтверждения"}
-              </div>
-            </div>
-          </div>
-          {reportError ? <div className="anti-error">{reportError}</div> : null}
-        </div>
-      </div>
-
-      <div className="anti-step__block">
-        <p className="label-strong">Результаты проверки на соответствие редакционной политике журнала</p>
-        <div className="anti-radio-grid">
-          <label className="anti-radio-option">
-            <input
-              type="radio"
-              name="policy"
-              checked={policy === "match"}
-              onChange={() => {
-                setPolicy("match");
-                setDidTryFinish(false);
-                setDidTryReject(false);
-                setSaved(false);
-              }}
-            />
-            <span>Соответствует редакционной политике журнала</span>
-          </label>
-
-          <label className="anti-radio-option">
-            <input
-              type="radio"
-              name="policy"
-              checked={policy === "not_match"}
-              onChange={() => {
-                setPolicy("not_match");
-                setDidTryFinish(false);
-                setDidTryReject(false);
-                setSaved(false);
-              }}
-            />
-            <span>Не соответствует редакционной политике</span>
-          </label>
-        </div>
-
-        {policy === "not_match" ? (
-          <div className="anti-policy-report mt-16">
-            <p className="label-strong">Отчёт о проверке на соответствие редакционной политике</p>
-            <p className="muted anti-policy-report__hint">
-              Загрузите файл с отчётом — он понадобится при отклонении по этому основанию.
-            </p>
-            <div className={`anti-upload mt-12 ${!policyReportFile && didTryReject ? "anti-upload--error" : ""}`}>
+    <div className="anti-figma">
+      <div className="anti-figma__top">
+        <section className="anti-figma__block">
+          <h4 className="anti-figma__heading">Результаты проверки на антиплагиат</h4>
+          <div className="anti-figma__field anti-figma__field--narrow">
+            <label className="anti-figma__label" htmlFor="anti-originality">
+              Процент оригинальности, %
+            </label>
+            <div
+              className={`anti-figma__input-shell${originalityError && didTryFinish ? " anti-figma__input-shell--error" : ""}`}
+            >
               <input
-                type="file"
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                id="anti-originality"
+                className="anti-figma__input"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={100}
+                step={0.1}
+                placeholder=""
+                value={originalityInput}
                 onChange={(e) => {
-                  policyReportFileChange(e.target.files);
+                  setOriginalityInput(e.target.value);
+                  setDidTryFinish(false);
+                  setSaved(false);
                 }}
               />
-              <div className="anti-upload__content">
-                <div className="anti-upload__title">Переместите файл или выберите на компьютере</div>
-                <div className="muted anti-upload__sub">
-                  {policyReportFile ? `Выбрано: ${policyReportFile.name}` : "Форматы: PDF, Word, изображения"}
-                </div>
+            </div>
+            {originalityError ? <p className="anti-figma__error">{originalityError}</p> : null}
+          </div>
+
+          <div className="anti-figma__field">
+            <label className="anti-figma__label" htmlFor="anti-report-file">
+              Отчет по проверке (при проценте оригинальности свыше 75%, загрузка отчета необязательна)
+            </label>
+            <div className="anti-figma__upload-outer">
+              <div
+                className={`anti-figma__upload${requiresReport && !reportFile && didTryFinish ? " anti-figma__upload--error" : ""}`}
+              >
+                <input
+                  id="anti-report-file"
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  onChange={(e) => {
+                    fileChange(e.target.files);
+                  }}
+                />
+                <p className="anti-figma__upload-text">
+                  {reportFile ? reportFile.name : "Переместите файлы или выберите на компьютере"}
+                </p>
               </div>
             </div>
-            {policyReportError ? <div className="anti-error">{policyReportError}</div> : null}
+            {reportError ? <p className="anti-figma__error">{reportError}</p> : null}
           </div>
-        ) : null}
+        </section>
 
-        {policyError ? <div className="anti-error">{policyError}</div> : null}
+        <div className="anti-figma__divider" aria-hidden />
+
+        <section className="anti-figma__block anti-figma__block--policy">
+          <h4 className="anti-figma__heading">Результаты проверки на соответствие требованиям журнала</h4>
+          <div className="anti-figma__radios" role="radiogroup" aria-label="Соответствие журналу">
+            <label className="anti-figma__radio-row">
+              <input
+                type="radio"
+                name="policy"
+                checked={policy === "match"}
+                onChange={() => {
+                  setPolicy("match");
+                  setDidTryFinish(false);
+                  setDidTryReject(false);
+                  setSaved(false);
+                }}
+              />
+              <span>Соответствует требованиям журнала</span>
+            </label>
+            <label className="anti-figma__radio-row">
+              <input
+                type="radio"
+                name="policy"
+                checked={policy === "not_match"}
+                onChange={() => {
+                  setPolicy("not_match");
+                  setDidTryFinish(false);
+                  setDidTryReject(false);
+                  setSaved(false);
+                }}
+              />
+              <span>Не соответствует требованиям журнала</span>
+            </label>
+          </div>
+
+          {policy === "not_match" ? (
+            <div className="anti-figma__policy-extra">
+              <label className="anti-figma__label" htmlFor="anti-policy-report">
+                Отчёт о проверке на соответствие
+              </label>
+              <div className="anti-figma__upload-outer">
+                <div
+                  className={`anti-figma__upload${!policyReportFile && didTryReject ? " anti-figma__upload--error" : ""}`}
+                >
+                  <input
+                    id="anti-policy-report"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      policyReportFileChange(e.target.files);
+                    }}
+                  />
+                  <p className="anti-figma__upload-text">
+                    {policyReportFile ? policyReportFile.name : "Переместите файлы или выберите на компьютере"}
+                  </p>
+                </div>
+              </div>
+              {policyReportError ? <p className="anti-figma__error">{policyReportError}</p> : null}
+            </div>
+          ) : null}
+
+          {policyError ? <p className="anti-figma__error">{policyError}</p> : null}
+        </section>
       </div>
 
-      <div className="anti-actions">
+      <div className="anti-figma__actions">
         <button
           type="button"
-          className="ghost-button"
+          className="btn-secondary-lg"
           onClick={() => {
             setSaved(true);
           }}
         >
           Сохранить
         </button>
-
         <button
           type="button"
-          className="primary-button"
+          className="btn-primary-lg"
           disabled={!canFinish}
           onClick={() => {
             setDidTryFinish(true);
@@ -230,12 +238,11 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
             onFinish();
           }}
         >
-          Завершить этап и отправить далее
+          Завершить этап
         </button>
-
         <button
           type="button"
-          className="ghost-button"
+          className="btn-text-danger"
           disabled={!canReject}
           onClick={() => {
             setDidTryReject(true);
@@ -248,10 +255,9 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
         </button>
       </div>
 
-      {saved ? <div className="anti-saved muted">Черновик сохранен (локально).</div> : null}
+      {saved ? <p className="anti-figma__saved muted">Черновик сохранен (локально).</p> : null}
     </div>
   );
 }
 
 export default AntiplagiarismStep;
-
