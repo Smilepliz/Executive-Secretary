@@ -14,6 +14,7 @@
   --color-status-info-bg: #c6dcff;
   --color-input-stroke: #99b1e6;
   --color-danger: #ee3f58;
+  --color-validation: #e11432;
   --shadow-header: 0 2px 4px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(157, 172, 207, 0.16);
   --shadow-sidebar: 4px 0 8px rgba(0, 0, 0, 0.03);
   --shadow-card: 0 0 12px rgba(9, 54, 149, 0.04);
@@ -914,7 +915,7 @@ button {
   background: var(--color-bg-card);
   box-shadow: var(--shadow-sidebar);
   padding: 16px 0 16px 12px;
-  border-radius: 0;
+  border-radius: 12px;
   align-self: stretch;
 }
 
@@ -1364,7 +1365,8 @@ button {
 }
 
 .anti-figma__input-shell--error {
-  outline: 1px solid var(--color-danger);
+  border: 2px solid var(--color-validation);
+  box-sizing: border-box;
 }
 
 .anti-figma__input {
@@ -1401,8 +1403,8 @@ button {
 }
 
 .anti-figma__upload--error {
-  border-color: var(--color-danger);
-  background: #fff5f5;
+  border: 2px dashed var(--color-validation);
+  background: #fff;
 }
 
 .anti-figma__upload > input[type="file"] {
@@ -1423,7 +1425,13 @@ button {
 
 .anti-figma__error {
   margin: 4px 0 0;
-  font-size: 13px;
+  padding-left: 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-validation);
+}
+
+.anti-figma__error--file {
   color: var(--color-danger);
 }
 
@@ -1449,6 +1457,11 @@ button {
   height: 22px;
   accent-color: var(--color-congress-800);
   flex-shrink: 0;
+}
+
+.anti-figma__radios--error .anti-figma__radio-row input {
+  outline: 2px solid var(--color-validation);
+  outline-offset: 2px;
 }
 
 .anti-figma__policy-extra {

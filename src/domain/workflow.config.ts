@@ -52,12 +52,6 @@ export const workflowConfig: WorkflowConfig = {
       toStatus: "anti_passed"
     },
     {
-      id: "reject-after-anti",
-      label: "Отклонить",
-      fromStatus: "anti_in_progress",
-      toStatus: "article_rejected"
-    },
-    {
       id: "proceed-to-reviewers-stage",
       label: "К назначению рецензентов",
       fromStatus: "doc_ready_for_reviewers",

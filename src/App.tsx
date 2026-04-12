@@ -429,10 +429,7 @@ function App(): JSX.Element {
             <div className="editorial-card__split">
               <div className="editorial-card__main">
                 {shouldShowAntiForm ? (
-                  <AntiplagiarismStep
-                    onFinish={() => runAction("mark-anti-passed")}
-                    onReject={() => runAction("reject-after-anti")}
-                  />
+                  <AntiplagiarismStep onFinish={() => runAction("mark-anti-passed")} />
                 ) : showLaunchHero && primaryAction ? (
                   <div className="launch-workflow">
                     <p className="launch-workflow__text">
