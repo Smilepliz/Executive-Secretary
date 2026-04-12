@@ -744,8 +744,9 @@ button {
 
 .editorial-header__left {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px 16px;
   min-width: 0;
 }
 
@@ -791,17 +792,13 @@ button {
   max-width: 118px;
 }
 
+/* Всегда показываем вкладки: на GitHub Pages часто узкая ширина, иначе «Рецензенты» недоступны */
 .editorial-header__nav {
-  display: none;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  height: 34px;
-}
-
-@media (min-width: 900px) {
-  .editorial-header__nav {
-    display: flex;
-  }
+  min-height: 34px;
 }
 
 .editorial-header__nav-item {
