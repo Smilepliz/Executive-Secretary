@@ -11,6 +11,7 @@
   --color-congress-800: #01548b;
   --color-congress-700: #0062a8;
   --color-congress-600: #007cd0;
+  --color-congress-100: #dff0ff;
   --color-status-info-bg: #c6dcff;
   --color-input-stroke: #99b1e6;
   --color-danger: #ee3f58;
@@ -809,7 +810,14 @@ button {
   font-size: 16px;
   line-height: 22px;
   color: var(--color-text-secondary);
-  cursor: default;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+}
+
+.editorial-header__nav-item:hover {
+  color: var(--color-text-primary);
 }
 
 .editorial-header__nav-item--active {
@@ -905,6 +913,22 @@ button {
   gap: 16px;
   padding: 16px 16px 32px;
   box-sizing: border-box;
+}
+
+.editorial-body--single {
+  padding-top: 18px;
+}
+
+.editorial-placeholder-card {
+  padding: 24px 20px;
+}
+
+.editorial-placeholder-card__title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--color-text-secondary);
 }
 
 .editorial-sidebar {
@@ -1515,5 +1539,290 @@ button {
   min-height: 44px;
   padding: 12px 20px;
   border-radius: var(--radius-lg);
+}
+
+/* База рецензентов (макет Figma) */
+.reviewers-db {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.reviewers-db__card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.reviewers-db__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 42px;
+  padding: 12px 16px 16px;
+  border-bottom: 1px solid transparent;
+}
+
+.reviewers-db__title {
+  flex: 1 1 160px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  color: var(--color-text-secondary);
+}
+
+.reviewers-db__toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+/* Поля фильтров и поиска: макет Figma (Congress Blue 100) */
+.reviewers-db__filter,
+.reviewers-db__search {
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 2px solid var(--color-congress-100, #dff0ff);
+  background: #fff;
+}
+
+.reviewers-db__filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 286px;
+  max-width: 100%;
+  height: 48px;
+  padding: 12px;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+.reviewers-db__filter:disabled {
+  opacity: 1;
+  border: 2px solid var(--color-congress-100, #dff0ff);
+  background: #fff;
+}
+
+.reviewers-db__search {
+  flex: 1 1 200px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 415px;
+  height: 48px;
+  padding: 12px;
+  color: var(--color-text-secondary);
+}
+
+.reviewers-db__search-icon {
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.reviewers-db__search-placeholder {
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.reviewers-db__table-scroll {
+  flex: 1;
+  min-height: 200px;
+  overflow-x: auto;
+}
+
+.reviewers-db__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.reviewers-db__th {
+  height: 42px;
+  padding: 8px 16px;
+  text-align: left;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-text-secondary);
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--color-divider);
+  vertical-align: middle;
+}
+
+.reviewers-db__th-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.reviewers-db__th-inner--center {
+  width: 100%;
+  justify-content: center;
+}
+
+.reviewers-db__th--name {
+  width: 22%;
+}
+
+.reviewers-db__th--email {
+  width: 14%;
+}
+
+.reviewers-db__th--spec {
+  width: 18%;
+}
+
+.reviewers-db__th--kw {
+  width: auto;
+}
+
+.reviewers-db__th--bl {
+  width: 120px;
+  text-align: center;
+}
+
+.reviewers-db__row {
+  background: var(--color-bg-card);
+}
+
+.reviewers-db__row--blacklist {
+  background: rgba(238, 63, 88, 0.04);
+}
+
+.reviewers-db__td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-divider);
+  color: var(--color-text-primary);
+  vertical-align: top;
+  word-wrap: break-word;
+}
+
+.reviewers-db__td--bl {
+  width: 120px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.reviewers-db__name-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-congress-700);
+  text-align: left;
+  cursor: default;
+  text-decoration: none;
+}
+
+.reviewers-db__name-link:hover {
+  text-decoration: underline;
+}
+
+.reviewers-db__bl-empty {
+  display: inline-block;
+  min-height: 22px;
+}
+
+.reviewers-db__bl-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #ffc6c6;
+  font-size: 14px;
+  line-height: 20px;
+  color: #b80000;
+}
+
+.reviewers-db__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 16px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.reviewers-db__pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reviewers-db__page-nav {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-congress-700);
+  cursor: default;
+}
+
+.reviewers-db__page {
+  min-width: 32px;
+  height: 32px;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--color-congress-700);
+  cursor: default;
+}
+
+.reviewers-db__page--current {
+  background: var(--color-congress-700);
+  color: #fff;
+}
+
+.reviewers-db__page--ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.reviewers-db__add-btn {
+  min-width: 242px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 12px;
+  background: var(--color-congress-800);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+  color: #fff;
+  cursor: default;
+}
+
+.reviewers-db__add-btn:hover {
+  filter: brightness(1.03);
 }
 

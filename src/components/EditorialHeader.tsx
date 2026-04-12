@@ -1,6 +1,20 @@
 import { Bell, Books, CaretDown, List } from "@phosphor-icons/react";
 
-function EditorialHeader(): JSX.Element {
+export type HeaderNavTab = "overview" | "issue_table" | "authors" | "reviewers";
+
+const NAV_ITEMS: { id: HeaderNavTab; label: string }[] = [
+  { id: "overview", label: "Обзор" },
+  { id: "issue_table", label: "Таблица номера" },
+  { id: "authors", label: "Авторы" },
+  { id: "reviewers", label: "Рецензенты" }
+];
+
+interface EditorialHeaderProps {
+  activeTab: HeaderNavTab;
+  onTabChange: (tab: HeaderNavTab) => void;
+}
+
+function EditorialHeader({ activeTab, onTabChange }: EditorialHeaderProps): JSX.Element {
   return (
     <header className="editorial-header">
       <div className="editorial-header__inner">
@@ -15,10 +29,20 @@ function EditorialHeader(): JSX.Element {
             <span className="editorial-header__brand-text">Электронная Редакция</span>
           </div>
           <nav className="editorial-header__nav" aria-label="Основной раздел">
-            <span className="editorial-header__nav-item editorial-header__nav-item--active">Обзор</span>
-            <span className="editorial-header__nav-item">Таблица номера</span>
-            <span className="editorial-header__nav-item">Авторы</span>
-            <span className="editorial-header__nav-item">Рецензенты</span>
+            {NAV_ITEMS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={
+                  activeTab === id
+                    ? "editorial-header__nav-item editorial-header__nav-item--active"
+                    : "editorial-header__nav-item"
+                }
+                onClick={() => onTabChange(id)}
+              >
+                {label}
+              </button>
+            ))}
           </nav>
         </div>
         <div className="editorial-header__right">

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { CaretLeft } from "@phosphor-icons/react";
 import ActionPanel from "./components/ActionPanel";
-import EditorialHeader from "./components/EditorialHeader";
+import EditorialHeader, { HeaderNavTab } from "./components/EditorialHeader";
 import EditorialSidebar from "./components/EditorialSidebar";
 import ManualStageModal from "./components/ManualStageModal";
 import ReviewerAssignmentModal, { ReviewerOption } from "./components/ReviewerAssignmentModal";
@@ -36,6 +36,7 @@ import {
 } from "./domain/workflow.types";
 import AntiplagiarismStep from "./components/AntiplagiarismStep";
 import DocumentSubmissionStep from "./components/DocumentSubmissionStep";
+import ReviewersDatabasePage from "./components/ReviewersDatabasePage";
 
 interface ModalState {
   isOpen: boolean;
@@ -78,6 +79,7 @@ function App(): JSX.Element {
   const [sentRequests, setSentRequests] = useState<Record<string, string>>({});
   const [sendingReviewerId, setSendingReviewerId] = useState<string | null>(null);
   const [sendMailError, setSendMailError] = useState<string | null>(null);
+  const [headerTab, setHeaderTab] = useState<HeaderNavTab>("overview");
 
   const reviewerOptions: ReviewerOption[] = [
     {
@@ -387,12 +389,18 @@ function App(): JSX.Element {
 
   return (
     <div className="editorial-app">
-      <EditorialHeader />
+      <EditorialHeader activeTab={headerTab} onTabChange={setHeaderTab} />
 
-      <div className="editorial-body">
-        <EditorialSidebar currentStageId={currentStageId} onSubstepClick={openManualStageModal} />
+      <div className={headerTab === "overview" ? "editorial-body" : "editorial-body editorial-body--single"}>
+        {headerTab === "overview" ? (
+          <EditorialSidebar currentStageId={currentStageId} onSubstepClick={openManualStageModal} />
+        ) : null}
 
         <div className="editorial-main">
+          {headerTab === "reviewers" ? (
+            <ReviewersDatabasePage />
+          ) : headerTab === "overview" ? (
+            <>
           {showDemoScenarios ? (
             <section className="panel" style={{ marginBottom: 12 }}>
               <h3 className="label-strong">Сценарии демонстрации</h3>
@@ -532,6 +540,15 @@ function App(): JSX.Element {
               <WorkflowSideRail statusHeadline={railHeadline} statusTime={railTime} history={history} />
             </div>
           </div>
+            </>
+          ) : (
+            <section className="editorial-card editorial-placeholder-card">
+              <h1 className="editorial-placeholder-card__title">
+                {headerTab === "issue_table" ? "Таблица номера" : "Авторы"}
+              </h1>
+              <p className="muted">Раздел в разработке.</p>
+            </section>
+          )}
         </div>
       </div>
 
