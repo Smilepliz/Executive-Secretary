@@ -153,7 +153,7 @@ function AntiplagiarismStep({ onFinish, onReject }: AntiplagiarismStepProps): JS
           </div>
         </section>
 
-        <div className="anti-figma__divider" aria-hidden />
+        <hr className="anti-figma__divider" />
 
         <section className="anti-figma__block anti-figma__block--policy">
           <h4 className="anti-figma__heading">Результаты проверки на соответствие требованиям журнала</h4>
